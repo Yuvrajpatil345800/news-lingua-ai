@@ -1,0 +1,22 @@
+# Dependencies and build output
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+frontend/.output/
+frontend/.tanstack/
+frontend/.wrangler/
+
+# Secrets
+*.env
+*.env.local
+!*.env.example
+
+# Local files that currently contain credentials. Do not publish them.
+deployment_and_resume_guide.md
+backend/test-all-flows.js
+
+# Logs and editor files
+*.log
+.DS_Store
+.vscode/
+.idea/
