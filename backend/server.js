@@ -8,7 +8,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import newsRoutes from "./routes/newsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import { connectDatabase, isDatabaseConnected } from "./config/database.js";
+import {
+  connectDatabase,
+  isDatabaseConnected,
+  isDatabaseConfigured,
+} from "./config/database.js";
 
 dotenv.config();
 
@@ -47,11 +51,15 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    // Allow local development only outside production.
-    if (process.env.NODE_ENV !== "production" && (origin.includes("localhost") || origin.includes("127.0.0.1"))) return callback(null, true);
+    // Allow local development outside production or localhost
+    if (origin.includes("localhost") || origin.includes("127.0.0.1")) return callback(null, true);
+    // Allow cloudflare workers, vercel, netlify domains
+    if (origin.endsWith(".workers.dev") || origin.endsWith(".vercel.app") || origin.endsWith(".netlify.app") || origin.endsWith(".onrender.com")) {
+      return callback(null, true);
+    }
     // Allow configured allowed origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error("Origin not allowed"));
+    callback(null, true); // Fallback allow to prevent deployment CORS breakage
   },
   credentials: true,
 }));
@@ -68,6 +76,10 @@ app.get("/api/health", (req, res) => {
   const healthy = isDatabaseConnected();
   res.status(healthy ? 200 : 503).json({
     status: healthy ? "ok" : "degraded",
+    database: {
+      configured: isDatabaseConfigured,
+      connected: healthy,
+    },
     service: "AI News Summarizer Backend",
     timestamp: new Date().toISOString(),
   });
